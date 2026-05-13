@@ -20,7 +20,11 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/online-clone-amazon
+            cd /home/ubuntu || exit
+            if [ ! -d "online-clone-amazon" ]; then
+              git clone https://github.com/Priyanka101193Sharma/online-clone-amazon.git
+            fi
+            cd online-clone-amazon || exit
             minikube start --driver=docker || true
             git pull origin main
             docker build -t amazon-app .
