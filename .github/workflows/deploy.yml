@@ -13,19 +13,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy to EC2
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            # Go to home directory
             cd /home/ubuntu || exit
+
+            # Clone repo if not exists
             if [ ! -d "online-clone-amazon" ]; then
               git clone https://github.com/Priyanka101193Sharma/online-clone-amazon.git
             fi
+
+            # Enter project folder
             cd online-clone-amazon || exit
+
+            # Start minikube (safe restart)
             minikube start --driver=docker || true
-            git pull origin main
+
+            # Pull latest code safely
+            git pull origin main --rebase
+
+            # Build Docker image
             docker build -t amazon-app .
+
+            # Apply Kubernetes deployment
             kubectl apply -f deployment.yml
+
+            # Restart pods to reflect changes
+            kubectl rollout restart deployment amazon-deployment
