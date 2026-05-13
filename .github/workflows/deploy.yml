@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/online-clone-amazon
-            mimikube start --driver=amazon
+            minikube start --driver=docker || true
             git pull origin main
             docker build -t amazon-app .
             kubectl apply -f deployment.yml
