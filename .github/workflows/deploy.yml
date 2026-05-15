@@ -1,5 +1,4 @@
-
-name: Deploy to Kubernetes
+name: Deploy to EKS
 
 on:
   push:
@@ -11,36 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu || exit
+            cd /home/ubuntu/online-clone-amazon
 
-            if [ ! -d "online-clone-amazon" ]; then
-              git clone https://github.com/Priyanka101193Sharma/online-clone-amazon.git
-            fi
-
-            cd online-clone-amazon || exit
-
-            minikube status || minikube start --driver=docker
-
-            git reset --hard
-            git clean -fd
+            git config pull.rebase false
             git pull origin main
 
-            eval $(minikube docker-env)
-
-            docker build -t amazon-app .
+            docker build -t priyankakr/amazon-app:latest .
+            docker push priyankakr/amazon-app:latest
 
             kubectl apply -f deployment.yml
             kubectl apply -f service.yml
-            kubectl apply -f ingress.yml
 
             kubectl rollout restart deployment amazon-deployment
